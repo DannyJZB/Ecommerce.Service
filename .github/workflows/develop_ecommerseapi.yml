@@ -12,7 +12,7 @@ jobs:
   deploy:
     runs-on: windows-latest
     env:
-      PROJECT_FILE: Ecommerce.Service/Ecommerce.Service.csproj   # <-- AJÚSTALO
+      PROJECT_FILE: Ecommerce.Service/Ecommerce.Service.csproj
       PUBLISH_DIR: ./publish
 
     steps:
@@ -22,13 +22,18 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # RESTORE con el RID (clave para evitar NETSDK1047)
+      # Importante: restore con el mismo RID
       - name: Restore (win-x86)
         run: dotnet restore "$env:PROJECT_FILE" -r win-x86
 
-      # PUBLICAR self-contained x86 (plan 32-bit)
+      - name: Build
+        run: dotnet build "$env:PROJECT_FILE" -c Release --no-restore
+
       - name: Publish (win-x86 self-contained)
-        run: dotnet publish "$env:PROJECT_FILE" -c Release -r win-x86 --self-contained true -p:PublishReadyToRun=true -o "$env:PUBLISH_DIR"
+        run: dotnet publish "$env:PROJECT_FILE" -c Release -r win-x86 --self-contained true -p:PublishReadyToRun=true -o "$env:PUBLISH_DIR" --no-build
+
+      - name: List publish output (verificación)
+        run: dir "$env:PUBLISH_DIR"
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
