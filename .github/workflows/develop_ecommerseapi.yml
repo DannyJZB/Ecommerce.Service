@@ -1,8 +1,7 @@
 name: Build & Deploy API (win-x86 self-contained)
 
 on:
-  push:
-    branches: [ Develop ]
+  push: { branches: [ Develop ] }
   workflow_dispatch:
 
 permissions:
@@ -13,26 +12,23 @@ jobs:
   deploy:
     runs-on: windows-latest
     env:
-      PROJECT_FILE: Ecommerce.Service/Ecommerce.Service.csproj   # <-- AJÚSTALO si tu .csproj está en otra ruta
+      PROJECT_FILE: Ecommerce.Service/Ecommerce.Service.csproj   # <-- AJÚSTALO
       PUBLISH_DIR: ./publish
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore
-        run: dotnet restore "$env:PROJECT_FILE"
+      # RESTORE con el RID (clave para evitar NETSDK1047)
+      - name: Restore (win-x86)
+        run: dotnet restore "$env:PROJECT_FILE" -r win-x86
 
-      - name: Build
-        run: dotnet build "$env:PROJECT_FILE" -c Release --no-restore
-
-      # Publica para 32-bit (F1/D1) -> win-x86 self-contained
+      # PUBLICAR self-contained x86 (plan 32-bit)
       - name: Publish (win-x86 self-contained)
-        run: dotnet publish "$env:PROJECT_FILE" -c Release -r win-x86 --self-contained true -p:PublishReadyToRun=true -o "$env:PUBLISH_DIR" --no-build
+        run: dotnet publish "$env:PROJECT_FILE" -c Release -r win-x86 --self-contained true -p:PublishReadyToRun=true -o "$env:PUBLISH_DIR"
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
