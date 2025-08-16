@@ -3,6 +3,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Ecommerce.Api.Blobs;
 using Ecommerce.Api.Interfaces;
+using System.Text.Json;
 
 namespace Ecommerce.Api.Services
 {
@@ -27,6 +28,20 @@ namespace Ecommerce.Api.Services
             var headers = new BlobHttpHeaders { ContentType = contentType };
 
             await blob.UploadAsync(content, new BlobUploadOptions { HttpHeaders = headers }, ct);
+
+            // Agregar metadatos personalizados
+            var metadata = new Dictionary<string, string>
+            {
+                { "customerId", "111111111"},
+                { "total", "50"},
+                { "items", "[\"Item_6\",\"Item_7\",\"Item_8\",\"Item_9\",\"Item_10\"]"}
+            };
+
+            await blob.SetMetadataAsync(metadata);
+
+            var items = new[] { "Item_1", "Item_2", "Item_3", "Item_4", "Item_5" };
+            var itemsJson = JsonSerializer.Serialize(items);
+
             return safeName; // Guarda este nombre en tu BD si lo necesitas
         }
 
