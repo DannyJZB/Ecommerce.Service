@@ -39,9 +39,6 @@ namespace Ecommerce.Api.Services
 
             await blob.SetMetadataAsync(metadata);
 
-            var items = new[] { "Item_1", "Item_2", "Item_3", "Item_4", "Item_5" };
-            var itemsJson = JsonSerializer.Serialize(items);
-
             return safeName; // Guarda este nombre en tu BD si lo necesitas
         }
 
