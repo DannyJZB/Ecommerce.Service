@@ -1,9 +1,11 @@
 ﻿using Azure;
+using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using Ecommerce.Api.Blobs;
 using Ecommerce.Api.Interfaces;
-using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace Ecommerce.Api.Services
 {
@@ -11,12 +13,14 @@ namespace Ecommerce.Api.Services
     {
         private readonly BlobServiceClient _svc;
         private readonly BlobContainerClient _container;
+        private readonly IConfiguration _config;
 
-        public BlobStorageService(BlobServiceClient svc, BlobContainerOptions opts)
+        public BlobStorageService(BlobServiceClient svc, BlobContainerOptions opts, IConfiguration config)
         {
             _svc = svc;
             _container = _svc.GetBlobContainerClient(opts.ContainerName);
             _container.CreateIfNotExists(PublicAccessType.None); // contenedor privado
+            _config = config;
         }
 
         public async Task<string> UploadAsync(Stream content, string fileName, string contentType, string extension, CancellationToken ct = default)
@@ -61,6 +65,34 @@ namespace Ecommerce.Api.Services
             await foreach (var item in _container.GetBlobsAsync(prefix: prefix, cancellationToken: ct))
                 list.Add(item.Name);
             return list;
+        }
+
+        public async Task<string> GenerateSASToken(string fileName)
+        {
+            var ext = Path.GetExtension(fileName)?.ToLowerInvariant();
+            var safeName = $"{Guid.NewGuid():N}{ext}".ToLowerInvariant();
+
+            BlobClient blobClient = _container.GetBlobClient(safeName);
+
+            var sas = new BlobSasBuilder
+            {
+                BlobContainerName = blobClient.BlobContainerName,
+                BlobName = blobClient.Name,
+                Resource = "b",
+                ExpiresOn = DateTimeOffset.UtcNow.AddMinutes(10)
+            };
+            sas.SetPermissions(BlobSasPermissions.Read | BlobSasPermissions.Create | BlobSasPermissions.Write);
+
+            var accountName = _config.GetSection("AzureBlob")["AccountName"];
+            var accountKey = _config.GetSection("Blob:AccountKey").Value;
+
+            var token = sas.ToSasQueryParameters(
+                new StorageSharedKeyCredential(accountName, accountKey) // Key1 sstorage account
+            ).ToString();
+
+            var sasUrl = $"{blobClient.Uri}?{token}";
+
+            return sasUrl;
         }
     }
 }

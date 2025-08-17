@@ -6,5 +6,6 @@
         Task<Stream> DownloadAsync(string blobName, CancellationToken ct = default);
         Task DeleteAsync(string blobName, CancellationToken ct = default);
         Task<IReadOnlyList<string>> ListAsync(string? prefix = null, CancellationToken ct = default);
+        Task<string> GenerateSASToken(string fileName);
     }
 }

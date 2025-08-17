@@ -49,6 +49,17 @@ builder.Services.AddSingleton(provider =>
 builder.Services.AddSingleton(new BlobContainerOptions(containerName!));
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularLocalhost",
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:4200", "http://localhost:4200") // origen del Angular
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -57,6 +68,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseCors("AllowAngularLocalhost");
 
 app.UseSwagger();
 app.UseSwaggerUI();
