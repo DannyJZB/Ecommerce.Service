@@ -54,7 +54,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngularLocalhost",
         policy =>
         {
-            policy.WithOrigins("https://localhost:4200", "http://localhost:4200") // origen del Angular
+            policy.WithOrigins("https://localhost:4200", "http://localhost:4200", "https://proud-sand-0813e1910.2.azurestaticapps.net") // origen del Angular
                   .AllowAnyHeader()
                   .AllowAnyMethod();
         });
